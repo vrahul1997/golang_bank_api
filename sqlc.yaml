@@ -1,0 +1,18 @@
+version: "1"
+packages:
+  - name: "db"
+    # path for code generation
+    path: "./db/sqlc"
+    # path from where to 
+    queries: "./db/query/"
+    schema: "./db/migration/"
+    engine: "postgresql"
+    # for adding json tags to the generated structs
+    emit_json_tags: true
+    # emit prepare queries is for the performance
+    emit_prepared_queries: false
+    # to generate querier interface for the generated package
+    emit_interface: false
+    # sqlc will try to singulaize the table name to use as the model struct
+    # accounts will be converted into account
+    emit_exact_table_names: false
