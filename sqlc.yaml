@@ -12,7 +12,9 @@ packages:
     # emit prepare queries is for the performance
     emit_prepared_queries: false
     # to generate querier interface for the generated package
-    emit_interface: false
+    emit_interface: true
     # sqlc will try to singulaize the table name to use as the model struct
     # accounts will be converted into account
     emit_exact_table_names: false
+    # returns an empty slice instead of null values
+    emit_empty_slices: true

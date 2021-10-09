@@ -1,4 +1,3 @@
-
 -- name: CreateEntry :one
 INSERT INTO entries (
   account_id,

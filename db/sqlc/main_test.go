@@ -7,26 +7,26 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
+	"github.com/vrahul1997/golang_bank_api/util"
 )
 
-// We are assigning it here in order to reuse it.
-var testQueries *Queries
-var testdbConn *sql.DB
-
-const (
-	dbDriver = "postgres"
-	dbSource = "postgresql://root:puneetha@localhost:8000/simple_bank?sslmode=disable"
+var (
+	testQueries *Queries
+	testDB      *sql.DB
 )
 
 func TestMain(m *testing.M) {
-	var err error
-	testdbConn, err = sql.Open(dbDriver, dbSource)
+	config, err := util.LoadConfig("../..")
 	if err != nil {
-		log.Fatal("cannot connect to db: ", err)
+		log.Fatal("cannot load config:", err)
 	}
 
-	testQueries = New(testdbConn)
+	testDB, err = sql.Open(config.DBDriver, config.DBSource)
+	if err != nil {
+		log.Fatal("cannot connect to db:", err)
+	}
+
+	testQueries = New(testDB)
 
 	os.Exit(m.Run())
-
 }

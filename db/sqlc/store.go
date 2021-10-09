@@ -6,27 +6,28 @@ import (
 	"fmt"
 )
 
-// Store provides all function to execute db queries and transactions
-// This is called composition to increase the struct functionality
-// 		by embedding the queries struct within store all the individual functions
-// 		provided by the queries will be available by the store
-type Store struct {
-	*Queries
-	db *sql.DB
+// Store defines all functions to execute db queries and transactions
+type Store interface {
+	Querier
+	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
 }
 
-// New Store creates a new store
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+// SQLStore provides all functions to execute SQL queries and transactions
+type SQLStore struct {
+	db *sql.DB
+	*Queries
+}
+
+// NewStore creates a new store
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{
 		db:      db,
 		Queries: New(db),
 	}
 }
 
-// execTx executes a function within a database transaction
-// commit or rollback depends upon the value returned by the callback function
-func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
-	// This returns a transaction oject or an error
+// ExecTx executes a function within a database transaction
+func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -36,11 +37,11 @@ func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
 	err = fn(q)
 	if err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
-			return fmt.Errorf("tx error: %v, rb Error: %v", err, rbErr)
+			return fmt.Errorf("tx err: %v, rb err: %v", err, rbErr)
 		}
 		return err
 	}
-	// if all the operations are done, commit the transaction
+
 	return tx.Commit()
 }
 
@@ -60,10 +61,9 @@ type TransferTxResult struct {
 	ToEntry     Entry    `json:"to_entry"`
 }
 
-// function for transaction
-// transferTx performs the money transfer from one account to the other
-// It creates a transfer record, add account entries, add update accounts, balance within a single database transaction
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+// TransferTx performs a money transfer from one account to the other.
+// It creates the transfer, add account entries, and update accounts' balance within a database transaction
+func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTx(ctx, func(q *Queries) error {
