@@ -1,0 +1,23 @@
+version: "3.9" # optional since v1.27.0
+services:
+  postgres:
+    image: postgres:12-alpine
+    ports:
+      - 8000:5432
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=puneetha
+      - POSTGRES_DB=simple_bank
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_SOURCE=postgresql://root:puneetha@golang_bank_api_postgres_1/simple_bank?sslmode=disable
+    # Dependencies --> app will wait until postgres is completely installed
+    depends_on:
+      - postgres
+    entrypoint: ["/app/wait-for.sh", "golang_bank_api_postgres_1:5432", "--", "/app/start.sh"]
+    command: [/app/main]
